@@ -102,11 +102,17 @@ pub fn simulate() -> Simulation {
 
     for x in 0..BOARD_WIDTH {
         for y in 0..BOARD_HEIGHT {
-            if y > 0 && grid.get(x, y - 1) != Square::Friendly {
-                step1_points += 1;
-            }
+            step1_points += step1up(&grid, x, y);
         }
     }
 
     Simulation { step1_points }
+}
+
+fn step1up(grid: &Grid, x: usize, y: usize) -> usize {
+    if y > 0 && grid.get(x, y - 1) != Square::Friendly {
+        1
+    } else {
+        0
+    }
 }
