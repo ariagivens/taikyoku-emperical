@@ -116,3 +116,33 @@ fn step1up(grid: &Grid, x: usize, y: usize) -> usize {
         0
     }
 }
+fn stepNNorth(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n == 0 {
+        return 0;
+    } 
+    if y > 0 && grid.get(x, y - 1) != Square::Friendly {
+        1+stepNNorth(grid, x, y-1, n-1)
+    } else {
+        0
+    }
+}
+fn stepNNortheast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n == 0 {
+        return 0;
+    } 
+    if y > 0 && x < BOARD_WIDTH-1 && grid.get(x+1, y - 1) != Square::Friendly {
+        1+stepNNorth(grid, x+1, y-1, n-1)
+    } else {
+        0
+    }
+}
+fn stepNEast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n == 0 {
+        return 0;
+    } 
+    if y > 0 && x < BOARD_WIDTH-1 && grid.get(x+1, y - 1) != Square::Friendly {
+        1+stepNNorth(grid, x+1, y-1, n-1)
+    } else {
+        0
+    }
+}
