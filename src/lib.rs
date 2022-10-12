@@ -19,7 +19,7 @@ impl Display for Square {
         let c = match self {
             Square::Empty => ' ',
             Square::Friendly => 'F',
-            Square::Opponent => 'O'
+            Square::Opponent => 'O',
         };
         write!(f, "{}", c)
     }
@@ -116,10 +116,11 @@ fn step1up(grid: &Grid, x: usize, y: usize) -> usize {
         0
     }
 }
-fn stepNNorth(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+
+fn step_n_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     if n > 0 && y > 0 {
         match grid.get(x, y - 1) {
-            Square::Empty => 1+stepNNorth(grid, x, y-1, n-1),
+            Square::Empty => 1 + step_n_north(grid, x, y - 1, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
         }
@@ -127,23 +128,215 @@ fn stepNNorth(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
         0
     }
 }
-fn stepNNortheast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n == 0 {
-        return 0;
-    } 
-    if y > 0 && x < BOARD_WIDTH-1 && grid.get(x+1, y - 1) != Square::Friendly {
-        1+stepNNorth(grid, x+1, y-1, n-1)
+
+fn step_n_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x < BOARD_WIDTH - 1 && y > 0 {
+        match grid.get(x + 1, y - 1) {
+            Square::Empty => 1 + step_n_northeast(grid, x + 1, y - 1, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
     } else {
         0
     }
 }
-fn stepNEast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n == 0 {
-        return 0;
-    } 
-    if y > 0 && x < BOARD_WIDTH-1 && grid.get(x+1, y - 1) != Square::Friendly {
-        1+stepNNorth(grid, x+1, y-1, n-1)
+
+fn step_n_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x < BOARD_WIDTH - 1 {
+        match grid.get(x + 1, y) {
+            Square::Empty => 1 + step_n_east(grid, x + 1, y, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
     } else {
         0
     }
+}
+
+fn step_n_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x < BOARD_WIDTH - 1 && y < BOARD_HEIGHT - 1 {
+        match grid.get(x + 1, y + 1) {
+            Square::Empty => 1 + step_n_southeast(grid, x + 1, y + 1, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn step_n_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && y < BOARD_HEIGHT - 1 {
+        match grid.get(x, y + 1) {
+            Square::Empty => 1 + step_n_south(grid, x, y + 1, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn step_n_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x > 0 && y < BOARD_HEIGHT - 1 {
+        match grid.get(x - 1, y + 1) {
+            Square::Empty => 1 + step_n_southwest(grid, x - 1, y + 1, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn step_n_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x > 0 {
+        match grid.get(x - 1, y + 1) {
+            Square::Empty => 1 + step_n_west(grid, x - 1, y, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn step_n_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x > 0 && y > 0 {
+        match grid.get(x - 1, y - 1) {
+            Square::Empty => 1 + step_n_west(grid, x - 1, y - 1, n - 1),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && y - n > 0 {
+        match grid.get(x, y - n) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x + n > BOARD_WIDTH - 1 && y - n > 0 {
+        match grid.get(x + n, y - n) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x + n > BOARD_WIDTH - 1 {
+        match grid.get(x + n, y) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x + n > BOARD_WIDTH - 1 && y < BOARD_HEIGHT - 1 {
+        match grid.get(x + n, y + n) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && y < BOARD_HEIGHT - 1 {
+        match grid.get(x, y + n) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x > 0 && y < BOARD_HEIGHT - 1 {
+        match grid.get(x - n, y + n) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x > 0 {
+        match grid.get(x - n, y) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_n_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    if n > 0 && x > 0 && y > 0 {
+        match grid.get(x - n, y - n) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn dove_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_north(grid, x, y - 3, 3)
+}
+
+fn dove_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_northeast(grid, x + 3, y - 3, 3)
+}
+
+fn dove_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_east(grid, x + 3, y, 3)
+}
+
+fn dove_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_southeast(grid, x + 3, y + 3, 3)
+}
+
+fn dove_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_south(grid, x, y + 3, 3)
+}
+
+fn dove_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_southwest(grid, x - 3, y + 3, 3)
+}
+
+fn dove_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_west(grid, x - 3, y, 3)
+}
+
+fn dove_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+    step_n_west(grid, x - 3, y - 3, 3)
 }
