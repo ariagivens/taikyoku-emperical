@@ -599,3 +599,117 @@ fn flying_jump_north(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
         _ => 0,
     }
 }
+
+fn flying_jump_northeast(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, 1, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_jump_east(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_east(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_east(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_east(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_jump_southeast(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, 1, y, 1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_jump_south(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, 0, y, 1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_south(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_south(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_south(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_jump_southwest(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, -1, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_jump_west(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, -1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_west(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_west(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_west(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_jump_northwest(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, -1, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps),
+            Square::Friendly if jumps > 0 => 1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_north(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 0, y, -1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_north(grid, xp, yp),
+            Square::Friendly => 1 + count_pieces_north(grid, xp, yp),
+            Square::Opponent => 1 + count_pieces_north(grid, xp, yp),
+        },
+        _ => 0,
+    }
+
+}
+
+fn count_pieces_north(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 0, y, -1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_north(grid, xp, yp),
+            Square::Friendly => 1 + count_pieces_north(grid, xp, yp),
+            Square::Opponent => 1 + count_pieces_north(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
