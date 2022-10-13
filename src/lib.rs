@@ -798,3 +798,143 @@ fn count_pieces_north(grid: &Grid, x: i64, y: i64) -> i64 {
         _ => 0,
     }
 }
+
+fn flying_capture_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 1, y, -1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_northeast(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_northeast(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 1, y, -1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_northeast(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_northeast(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_east(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_east(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_east(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_east(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_east(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_east(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_southeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 1, y, 1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_southeast(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_southeast(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_southeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 1, y, 1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_southeast(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_southeast(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_south(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 0, y, 1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_south(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_south(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_south(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, 0, y, 1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_south(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_south(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_southwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, -1, y, 1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_southwest(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_southwest(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_southwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, -1, y, 1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_southwest(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_southwest(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_west(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, -1, y, 0) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_west(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_west(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_west(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, -1, y, 0) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_west(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_west(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn flying_capture_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, -1, y, -1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_capture_northwest(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_northwest(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
+
+fn count_pieces_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    match try_add(x, -1, y, -1) {
+        Some((xp, yp)) => match grid.get(xp, yp) {
+            Square::Empty => 0 + count_pieces_northwest(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_northwest(grid, xp, yp),
+        },
+        _ => 0,
+    }
+}
