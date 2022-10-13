@@ -13,6 +13,8 @@ pub struct Simulation {
     orthogonal_jumps: [f64; 4],
     diagonal_jumps: [f64; 4],
     dove: f64,
+    orthogonal_range: f64,
+    diagonal_range: f64,
 }
 
 impl Simulation {
@@ -23,6 +25,8 @@ impl Simulation {
             dove: 0.0,
             orthogonal_jumps: [0.0; 4],
             diagonal_jumps: [0.0; 4],
+            orthogonal_range: 0.0,
+            diagonal_range: 0.0
         }
     }
 }
@@ -40,6 +44,8 @@ impl Add for Simulation {
             self.diagonal_jumps[n] += rhs.diagonal_jumps[n];
         }
         self.dove += rhs.dove;
+        self.orthogonal_range += rhs.orthogonal_range;
+        self.diagonal_range += rhs.diagonal_range;
 
         self
     }
@@ -64,6 +70,8 @@ impl Div<f64> for Simulation {
             self.diagonal_jumps[n] /= divisor;
         }
         self.dove /= divisor;
+        self.orthogonal_range /= divisor;
+        self.diagonal_range /= divisor;
 
         self
     }
@@ -88,6 +96,8 @@ impl Display for Simulation {
         for n in 2..4 {
             writeln!(f, "\t\t{n}: {}", self.diagonal_jumps[n])?;
         }
+        writeln!(f, "\tOrthogonal Range: {}", self.orthogonal_range)?;
+        writeln!(f, "\tDiagonal Range: {}", self.diagonal_range)?;
         writeln!(f, "\tDove Moves: {}", self.dove)?;
         Ok(())
     }
@@ -212,20 +222,24 @@ pub fn simulate() -> Simulation {
     let mut orthogonal_jumps = [0.0; 4];
     let mut diagonal_jumps = [0.0; 4];
     let mut dove = 0.0;
+    let mut orthogonal_range = 0.0;
+    let mut diagonal_range = 0.0;
 
     for x in 0..BOARD_WIDTH {
         for y in 0..BOARD_HEIGHT {
             let x = x as i64;
             let y = y as i64;
             for n in 0..8 {
-                orthogonal_steps[n] += step_n_orthagonal(&grid, x, y, n as i64) as f64 / 4.0;
+                orthogonal_steps[n] += step_n_orthogonal(&grid, x, y, n as i64) as f64 / 4.0;
                 diagonal_steps[n] += step_n_diagonal(&grid, x, y, n as i64) as f64 / 4.0;
             }
             for n in 0..4 {
-                orthogonal_jumps[n] += jump_n_orthagonal(&grid, x, y, n as i64) as f64 / 4.0;
+                orthogonal_jumps[n] += jump_n_orthogonal(&grid, x, y, n as i64) as f64 / 4.0;
                 diagonal_jumps[n] += jump_n_diagonal(&grid, x, y, n as i64) as f64 / 4.0;
             }
-            dove += dove_moves(&grid, x as i64, y) as f64 / 4.0;
+            dove += dove_moves(&grid, x, y) as f64 / 4.0;
+            orthogonal_range += range_orthogonal(&grid, x, y) as f64 / 4.0;
+            diagonal_range += range_diagonal(&grid, x, y) as f64 / 4.0;
         }
     }
 
@@ -235,10 +249,12 @@ pub fn simulate() -> Simulation {
         orthogonal_jumps,
         diagonal_jumps,
         dove,
+        orthogonal_range,
+        diagonal_range
     }
 }
 
-fn step_n_orthagonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+fn step_n_orthogonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
     step_n_north(grid, x, y, n)
         + step_n_east(grid, x, y, n)
         + step_n_south(grid, x, y, n)
@@ -340,7 +356,7 @@ fn step_n_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
     }
 }
 
-fn jump_n_orthagonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+fn jump_n_orthogonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
     jump_n_north(grid, x, y, n)
         + jump_n_east(grid, x, y, n)
         + jump_n_south(grid, x, y, n)
@@ -499,4 +515,18 @@ fn dove_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
     } else {
         0
     }
+}
+
+fn range_orthogonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    range_north(grid, x, y)
+        + range_east(grid, x, y)
+        + range_south(grid, x, y)
+        + range_west(grid, x, y)
+}
+
+fn range_diagonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    range_northeast(grid, x, y)
+        + range_southeast(grid, x, y)
+        + range_southwest(grid, x, y)
+        + range_northwest(grid, x, y)
 }
