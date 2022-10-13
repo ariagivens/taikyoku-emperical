@@ -1,10 +1,96 @@
-use std::fmt::Display;
+use std::{
+    fmt::{Debug, Display},
+    ops::{Add, AddAssign, Div},
+};
 
 use rand::{thread_rng, Rng};
+use rayon::{iter::repeatn, prelude::*};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Simulation {
-    step1_points: usize,
+    orthogonal_steps: [f64; 8],
+    diagonal_steps: [f64; 8],
+    orthogonal_jumps: [f64; 4],
+    diagonal_jumps: [f64; 4],
+    dove: f64,
+}
+
+impl Simulation {
+    fn new() -> Self {
+        Simulation {
+            orthogonal_steps: [0.0; 8],
+            diagonal_steps: [0.0; 8],
+            dove: 0.0,
+            orthogonal_jumps: [0.0; 4],
+            diagonal_jumps: [0.0; 4],
+        }
+    }
+}
+
+impl Add for Simulation {
+    type Output = Simulation;
+
+    fn add(mut self, rhs: Self) -> Self::Output {
+        for n in 0..8 {
+            self.orthogonal_steps[n] += rhs.orthogonal_steps[n];
+            self.diagonal_steps[n] += rhs.diagonal_steps[n];
+        }
+        for n in 0..4 {
+            self.orthogonal_jumps[n] += rhs.orthogonal_jumps[n];
+            self.diagonal_jumps[n] += rhs.diagonal_jumps[n];
+        }
+        self.dove += rhs.dove;
+
+        self
+    }
+}
+
+impl AddAssign for Simulation {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = self.clone() + rhs;
+    }
+}
+
+impl Div<f64> for Simulation {
+    type Output = Simulation;
+
+    fn div(mut self, divisor: f64) -> Self::Output {
+        for n in 0..8 {
+            self.orthogonal_steps[n] /= divisor;
+            self.diagonal_steps[n] /= divisor;
+        }
+        for n in 0..4 {
+            self.orthogonal_jumps[n] /= divisor;
+            self.diagonal_jumps[n] /= divisor;
+        }
+        self.dove /= divisor;
+
+        self
+    }
+}
+
+impl Display for Simulation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Simulation Results:")?;
+        writeln!(f, "\tOrthogonal Steps:")?;
+        for n in 1..8 {
+            writeln!(f, "\t\t{n}: {}", self.orthogonal_steps[n])?;
+        }
+        writeln!(f, "\tDiagonal Steps:")?;
+        for n in 1..8 {
+            writeln!(f, "\t\t{n}: {}", self.diagonal_steps[n])?;
+        }
+        writeln!(f, "\tOrthogonal Jumps:")?;
+        for n in 2..4 {
+            writeln!(f, "\t\t{n}: {}", self.orthogonal_jumps[n])?;
+        }
+        writeln!(f, "\tDiagonal Jumps:")?;
+        for n in 2..4 {
+            writeln!(f, "\t\t{n}: {}", self.diagonal_jumps[n])?;
+        }
+        writeln!(f, "\tDove Moves: {}", self.dove)?;
+        Ok(())
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -40,19 +126,29 @@ impl Grid {
         }
     }
 
-    fn get(&self, x: usize, y: usize) -> Square {
+    fn get<T, U>(&self, x: T, y: U) -> Square
+    where
+        T: TryInto<usize>,
+        <T as TryInto<usize>>::Error: Debug,
+        U: TryInto<usize>,
+        <U as TryInto<usize>>::Error: Debug,
+    {
+        let x = x.try_into().unwrap();
+        let y = y.try_into().unwrap();
         self.squares[y * BOARD_WIDTH + x]
     }
 
-    fn set(&mut self, square: Square, x: usize, y: usize) {
+    fn set<T, U>(&mut self, square: Square, x: T, y: U)
+    where
+        T: TryInto<usize>,
+        <T as TryInto<usize>>::Error: Debug,
+        U: TryInto<usize>,
+        <U as TryInto<usize>>::Error: Debug,
+    {
+        let x: usize = x.try_into().unwrap();
+        let y: usize = y.try_into().unwrap();
         self.squares[y * BOARD_WIDTH + x] = square;
     }
-
-    // fn with(&self, square: Square, x: usize, y:usize) -> Self {
-    //     let mut grid = self.clone();
-    //     grid.set(square, x, y);
-    //     grid
-    // }
 
     fn randomly_place(&mut self, rng: &mut impl Rng, square: Square) {
         let x = rng.gen_range(0..BOARD_WIDTH);
@@ -78,6 +174,21 @@ impl Display for Grid {
     }
 }
 
+pub fn simulate_n(n: usize) -> Simulation {
+    let mut sim = Simulation::new();
+    for _ in 0..n {
+        sim += simulate();
+    }
+    sim / n as f64
+}
+
+pub fn simulate_n_par(n: usize) -> Simulation {
+    let sim = repeatn((), n)
+        .map(|()| simulate())
+        .reduce(Simulation::new, Simulation::add);
+    sim / n as f64
+}
+
 pub fn simulate() -> Simulation {
     let mut rng = thread_rng();
 
@@ -96,126 +207,172 @@ pub fn simulate() -> Simulation {
         grid.randomly_place(&mut rng, square);
     }
 
-    //println!("{}", grid);
-
-    let mut step1_points = 0;
+    let mut orthogonal_steps = [0.0; 8];
+    let mut diagonal_steps = [0.0; 8];
+    let mut orthogonal_jumps = [0.0; 4];
+    let mut diagonal_jumps = [0.0; 4];
+    let mut dove = 0.0;
 
     for x in 0..BOARD_WIDTH {
         for y in 0..BOARD_HEIGHT {
-            step1_points += step1up(&grid, x, y);
+            let x = x as i64;
+            let y = y as i64;
+            for n in 0..8 {
+                orthogonal_steps[n] += step_n_orthagonal(&grid, x, y, n as i64) as f64 / 4.0;
+                diagonal_steps[n] += step_n_diagonal(&grid, x, y, n as i64) as f64 / 4.0;
+            }
+            for n in 0..4 {
+                orthogonal_jumps[n] += jump_n_orthagonal(&grid, x, y, n as i64) as f64 / 4.0;
+                diagonal_jumps[n] += jump_n_diagonal(&grid, x, y, n as i64) as f64 / 4.0;
+            }
+            dove += dove_moves(&grid, x as i64, y) as f64 / 4.0;
         }
     }
 
-    Simulation { step1_points }
-}
-
-fn step1up(grid: &Grid, x: usize, y: usize) -> usize {
-    if y > 0 && grid.get(x, y - 1) != Square::Friendly {
-        1
-    } else {
-        0
+    Simulation {
+        orthogonal_steps,
+        diagonal_steps,
+        orthogonal_jumps,
+        diagonal_jumps,
+        dove,
     }
 }
 
-fn step_n_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && y > 0 {
-        match grid.get(x, y - 1) {
-            Square::Empty => 1 + step_n_north(grid, x, y - 1, n - 1),
+fn step_n_orthagonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    step_n_north(grid, x, y, n)
+        + step_n_east(grid, x, y, n)
+        + step_n_south(grid, x, y, n)
+        + step_n_west(grid, x, y, n)
+}
+
+fn step_n_diagonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    step_n_northeast(grid, x, y, n)
+        + step_n_southeast(grid, x, y, n)
+        + step_n_southwest(grid, x, y, n)
+        + step_n_northwest(grid, x, y, n)
+}
+
+fn step_n_north(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 0, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_north(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x < BOARD_WIDTH - 1 && y > 0 {
-        match grid.get(x + 1, y - 1) {
-            Square::Empty => 1 + step_n_northeast(grid, x + 1, y - 1, n - 1),
+fn step_n_northeast(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_northeast(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x < BOARD_WIDTH - 1 {
-        match grid.get(x + 1, y) {
-            Square::Empty => 1 + step_n_east(grid, x + 1, y, n - 1),
+fn step_n_east(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_east(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x < BOARD_WIDTH - 1 && y < BOARD_HEIGHT - 1 {
-        match grid.get(x + 1, y + 1) {
-            Square::Empty => 1 + step_n_southeast(grid, x + 1, y + 1, n - 1),
+fn step_n_southeast(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_southeast(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && y < BOARD_HEIGHT - 1 {
-        match grid.get(x, y + 1) {
-            Square::Empty => 1 + step_n_south(grid, x, y + 1, n - 1),
+fn step_n_south(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 0, y, 1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_south(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x > 0 && y < BOARD_HEIGHT - 1 {
-        match grid.get(x - 1, y + 1) {
-            Square::Empty => 1 + step_n_southwest(grid, x - 1, y + 1, n - 1),
+fn step_n_southwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, -1, y, 1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_southwest(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x > 0 {
-        match grid.get(x - 1, y + 1) {
-            Square::Empty => 1 + step_n_west(grid, x - 1, y, n - 1),
+fn step_n_west(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, -1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_west(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn step_n_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x > 0 && y > 0 {
-        match grid.get(x - 1, y - 1) {
-            Square::Empty => 1 + step_n_west(grid, x - 1, y - 1, n - 1),
+fn step_n_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, -1, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + step_n_northwest(grid, xp, yp, n - 1),
             Square::Friendly => 0,
             Square::Opponent => 1,
-        }
-    } else {
-        0
+        },
+        _ => 0,
     }
 }
 
-fn jump_n_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && y - n > 0 {
-        match grid.get(x, y - n) {
+fn jump_n_orthagonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    jump_n_north(grid, x, y, n)
+        + jump_n_east(grid, x, y, n)
+        + jump_n_south(grid, x, y, n)
+        + jump_n_west(grid, x, y, n)
+}
+
+fn jump_n_diagonal(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    jump_n_northeast(grid, x, y, n)
+        + jump_n_southeast(grid, x, y, n)
+        + jump_n_southwest(grid, x, y, n)
+        + jump_n_northwest(grid, x, y, n)
+}
+
+fn try_add(x: i64, dx: i64, y: i64, dy: i64) -> Option<(i64, i64)> {
+    let x = x as i64;
+    let dx = dx as i64;
+    let y = y as i64;
+    let dy = dy as i64;
+    if x + dx > 0
+        && y + dy > 0
+        && x + dx < (BOARD_WIDTH as i64) - 1
+        && y + dy < (BOARD_HEIGHT as i64) - 1
+    {
+        Some(((x + dx) as i64, (y + dy) as i64))
+    } else {
+        None
+    }
+}
+
+fn jump_n_north(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, 0, y, -n) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -225,9 +382,9 @@ fn jump_n_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x + n > BOARD_WIDTH - 1 && y - n > 0 {
-        match grid.get(x + n, y - n) {
+fn jump_n_northeast(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, n, y, -n) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -237,9 +394,9 @@ fn jump_n_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x + n > BOARD_WIDTH - 1 {
-        match grid.get(x + n, y) {
+fn jump_n_east(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, n, y, 0) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -249,9 +406,9 @@ fn jump_n_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x + n > BOARD_WIDTH - 1 && y < BOARD_HEIGHT - 1 {
-        match grid.get(x + n, y + n) {
+fn jump_n_southeast(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, n, y, n) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -261,9 +418,9 @@ fn jump_n_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && y < BOARD_HEIGHT - 1 {
-        match grid.get(x, y + n) {
+fn jump_n_south(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, 0, y, n) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -273,9 +430,9 @@ fn jump_n_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x > 0 && y < BOARD_HEIGHT - 1 {
-        match grid.get(x - n, y + n) {
+fn jump_n_southwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, -n, y, n) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -285,9 +442,9 @@ fn jump_n_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x > 0 {
-        match grid.get(x - n, y) {
+fn jump_n_west(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, -n, y, 0) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -297,9 +454,9 @@ fn jump_n_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn jump_n_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    if n > 0 && x > 0 && y > 0 {
-        match grid.get(x - n, y - n) {
+fn jump_n_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, -n, y, -n) {
+        match grid.get(xp, yp) {
             Square::Empty => 1,
             Square::Friendly => 0,
             Square::Opponent => 1,
@@ -309,34 +466,37 @@ fn jump_n_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
     }
 }
 
-fn dove_north(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_north(grid, x, y - 3, 3)
+fn dove_moves(grid: &Grid, x: i64, y: i64) -> i64 {
+    dove_northeast(grid, x, y)
+        + dove_southeast(grid, x, y)
+        + dove_southwest(grid, x, y)
+        + dove_northwest(grid, x, y)
 }
 
-fn dove_northeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_northeast(grid, x + 3, y - 3, 3)
+fn dove_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    if y > 3 {
+        step_n_northeast(grid, x + 3, y - 3, 3)
+    } else {
+        0
+    }
 }
 
-fn dove_east(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_east(grid, x + 3, y, 3)
-}
-
-fn dove_southeast(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
+fn dove_southeast(grid: &Grid, x: i64, y: i64) -> i64 {
     step_n_southeast(grid, x + 3, y + 3, 3)
 }
 
-fn dove_south(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_south(grid, x, y + 3, 3)
+fn dove_southwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    if x > 3 {
+        step_n_southwest(grid, x - 3, y + 3, 3)
+    } else {
+        0
+    }
 }
 
-fn dove_southwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_southwest(grid, x - 3, y + 3, 3)
-}
-
-fn dove_west(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_west(grid, x - 3, y, 3)
-}
-
-fn dove_northwest(grid: &Grid, x: usize, y: usize, n: usize) -> usize {
-    step_n_west(grid, x - 3, y - 3, 3)
+fn dove_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    if x > 3 && y > 3 {
+        step_n_west(grid, x - 3, y - 3, 3)
+    } else {
+        0
+    }
 }

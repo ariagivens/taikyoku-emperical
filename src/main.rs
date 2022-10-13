@@ -1,6 +1,15 @@
-use shogi_piece_values::simulate;
+use num_format::{Locale, ToFormattedString};
+use shogi_piece_values::simulate_n_par;
+use std::time::Instant;
 
 fn main() {
-    let simulation = simulate();
-    println!("{simulation:?}");
+    let n = 1_000_000;
+    let timer = Instant::now();
+    let simulation = simulate_n_par(n);
+    println!(
+        "Finished {} simulations in ~{} seconds.",
+        n.to_formatted_string(&Locale::en),
+        timer.elapsed().as_secs()
+    );
+    println!("{simulation}");
 }
