@@ -26,7 +26,7 @@ impl Simulation {
             orthogonal_jumps: [0.0; 4],
             diagonal_jumps: [0.0; 4],
             orthogonal_range: 0.0,
-            diagonal_range: 0.0
+            diagonal_range: 0.0,
         }
     }
 }
@@ -250,7 +250,7 @@ pub fn simulate() -> Simulation {
         diagonal_jumps,
         dove,
         orthogonal_range,
-        diagonal_range
+        diagonal_range,
     }
 }
 
@@ -506,11 +506,6 @@ fn jump_knight_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
     }
 }
 
-
-
-
-
-
 fn dove_moves(grid: &Grid, x: i64, y: i64) -> i64 {
     dove_northeast(grid, x, y)
         + dove_southeast(grid, x, y)
@@ -596,16 +591,10 @@ fn flying_jump_north(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
     match try_add(x, 0, y, -1) {
         Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
             Square::Empty => 1 + flying_jump_north(grid, xp, yp, n - 1, jumps),
-            Square::Friendly => if(jumps > 0) {
-                1 + flying_jump_north(grid, xp, yp, n - 1, jumps-1)
-            } else {
-                0
-            }
-            Square::Opponent =>if(jumps > 0) {
-                1 + flying_jump_north(grid, xp, yp, n - 1, jumps-1)
-            } else {
-                1
-            }
+            Square::Friendly if jumps > 0 => 1 + flying_jump_north(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly => 0,
+            Square::Opponent if jumps > 0 => 1 + flying_jump_north(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent => 1,
         },
         _ => 0,
     }
