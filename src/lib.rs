@@ -15,6 +15,11 @@ pub struct Simulation {
     dove: f64,
     orthogonal_range: f64,
     diagonal_range: f64,
+    knight_jump: f64,
+    orthogonal_flying_jump: f64,
+    diagonal_flying_jump: f64,
+    orthogonal_flying_capture: f64,
+    diagonal_flying_capture: f64,
 }
 
 impl Simulation {
@@ -27,6 +32,11 @@ impl Simulation {
             diagonal_jumps: [0.0; 4],
             orthogonal_range: 0.0,
             diagonal_range: 0.0,
+            knight_jump: 0.0,
+            orthogonal_flying_jump: 0.0,
+            diagonal_flying_jump: 0.0,
+            orthogonal_flying_capture: 0.0,
+            diagonal_flying_capture: 0.0,
         }
     }
 }
@@ -46,6 +56,11 @@ impl Add for Simulation {
         self.dove += rhs.dove;
         self.orthogonal_range += rhs.orthogonal_range;
         self.diagonal_range += rhs.diagonal_range;
+        self.knight_jump += rhs.knight_jump;
+        self.orthogonal_flying_jump += rhs.orthogonal_flying_jump;
+        self.diagonal_flying_jump += rhs.diagonal_flying_jump;
+        self.orthogonal_flying_capture += rhs.orthogonal_flying_capture;
+        self.diagonal_flying_capture += rhs.diagonal_flying_capture;
 
         self
     }
@@ -72,6 +87,11 @@ impl Div<f64> for Simulation {
         self.dove /= divisor;
         self.orthogonal_range /= divisor;
         self.diagonal_range /= divisor;
+        self.knight_jump /= divisor;
+        self.orthogonal_flying_jump /= divisor;
+        self.diagonal_flying_jump /= divisor;
+        self.orthogonal_flying_capture /= divisor;
+        self.diagonal_flying_capture /= divisor;
 
         self
     }
@@ -88,6 +108,8 @@ impl Display for Simulation {
         for n in 1..8 {
             writeln!(f, "\t\t{n}: {}", self.diagonal_steps[n])?;
         }
+        writeln!(f, "\tOrthogonal Range: {}", self.orthogonal_range)?;
+        writeln!(f, "\tDiagonal Range: {}", self.diagonal_range)?;
         writeln!(f, "\tOrthogonal Jumps:")?;
         for n in 2..4 {
             writeln!(f, "\t\t{n}: {}", self.orthogonal_jumps[n])?;
@@ -96,9 +118,12 @@ impl Display for Simulation {
         for n in 2..4 {
             writeln!(f, "\t\t{n}: {}", self.diagonal_jumps[n])?;
         }
-        writeln!(f, "\tOrthogonal Range: {}", self.orthogonal_range)?;
-        writeln!(f, "\tDiagonal Range: {}", self.diagonal_range)?;
+        writeln!(f, "\tKnight-Style Jump: {}", self.knight_jump)?;
         writeln!(f, "\tDove Moves: {}", self.dove)?;
+        writeln!(f, "\tOrthogonal Flying Jump: {}", self.orthogonal_flying_jump)?;
+        writeln!(f, "\tDiagonal Flying Jump: {}", self.diagonal_flying_jump)?;
+        writeln!(f, "\tOrthogonal Flying Capture: {}", self.orthogonal_flying_capture)?;
+        writeln!(f, "\tDiagonal Flying Capture: {}", self.diagonal_flying_capture)?;
         Ok(())
     }
 }
@@ -224,6 +249,11 @@ pub fn simulate() -> Simulation {
     let mut dove = 0.0;
     let mut orthogonal_range = 0.0;
     let mut diagonal_range = 0.0;
+    let mut knight_jump = 0.0;
+    let mut orthogonal_flying_jump = 0.0;
+    let mut diagonal_flying_jump = 0.0;
+    let mut orthogonal_flying_capture = 0.0;
+    let mut diagonal_flying_capture = 0.0;
 
     for x in 0..BOARD_WIDTH {
         for y in 0..BOARD_HEIGHT {
@@ -240,6 +270,11 @@ pub fn simulate() -> Simulation {
             dove += dove_moves(&grid, x, y) as f64 / 4.0;
             orthogonal_range += range_orthogonal(&grid, x, y) as f64 / 4.0;
             diagonal_range += range_diagonal(&grid, x, y) as f64 / 4.0;
+            knight_jump += jump_knight(&grid, x, y) as f64 / 2.0;
+            orthogonal_flying_jump += flying_jump_orthogonal(&grid, x, y) as f64 / 4.0;
+            diagonal_flying_jump += flying_jump_diagonal(&grid, x, y) as f64 / 4.0;
+            orthogonal_flying_capture += flying_capture_orthogonal(&grid, x, y) as f64 / 4.0;
+            diagonal_flying_capture += flying_capture_diagonal(&grid, x, y) as f64 / 4.0;
         }
     }
 
@@ -251,6 +286,11 @@ pub fn simulate() -> Simulation {
         dove,
         orthogonal_range,
         diagonal_range,
+        knight_jump,
+        orthogonal_flying_jump,
+        diagonal_flying_jump,
+        orthogonal_flying_capture,
+        diagonal_flying_capture,
     }
 }
 
@@ -482,6 +522,10 @@ fn jump_n_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
     }
 }
 
+fn jump_knight(grid: &Grid, x: i64, y: i64) -> i64 {
+    jump_knight_northeast(grid, x, y) + jump_knight_northwest(grid, x, y)
+}
+
 fn jump_knight_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
     if let Some((xp, yp)) = try_add(x, 1, y, -2) {
         match grid.get(xp, yp) {
@@ -587,6 +631,20 @@ fn range_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
     step_n_northwest(grid, x, y, BOARD_HEIGHT as i64)
 }
 
+fn flying_jump_orthogonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    flying_jump_north(grid, x, y, BOARD_HEIGHT as i64, 3)
+        + flying_jump_east(grid, x, y, BOARD_HEIGHT as i64, 3)
+        + flying_jump_south(grid, x, y, BOARD_HEIGHT as i64, 3)
+        + flying_jump_west(grid, x, y, BOARD_HEIGHT as i64, 3)
+}
+
+fn flying_jump_diagonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    flying_jump_northeast(grid, x, y, BOARD_HEIGHT as i64, 3)
+        + flying_jump_southeast(grid, x, y, BOARD_HEIGHT as i64, 3)
+        + flying_jump_southwest(grid, x, y, BOARD_HEIGHT as i64, 3)
+        + flying_jump_northwest(grid, x, y, BOARD_HEIGHT as i64, 3)
+}
+
 fn flying_jump_north(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
     match try_add(x, 0, y, -1) {
         Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
@@ -604,9 +662,13 @@ fn flying_jump_northeast(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64
     match try_add(x, 1, y, -1) {
         Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
             Square::Empty => 1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps),
-            Square::Friendly if jumps > 0 => 1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly if jumps > 0 => {
+                1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Friendly => 0,
-            Square::Opponent if jumps > 0 => 1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent if jumps > 0 => {
+                1 + flying_jump_northeast(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Opponent => 1,
         },
         _ => 0,
@@ -630,9 +692,13 @@ fn flying_jump_southeast(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64
     match try_add(x, 1, y, 1) {
         Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
             Square::Empty => 1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps),
-            Square::Friendly if jumps > 0 => 1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly if jumps > 0 => {
+                1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Friendly => 0,
-            Square::Opponent if jumps > 0 => 1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent if jumps > 0 => {
+                1 + flying_jump_southeast(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Opponent => 1,
         },
         _ => 0,
@@ -656,9 +722,13 @@ fn flying_jump_southwest(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64
     match try_add(x, -1, y, -1) {
         Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
             Square::Empty => 1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps),
-            Square::Friendly if jumps > 0 => 1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly if jumps > 0 => {
+                1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Friendly => 0,
-            Square::Opponent if jumps > 0 => 1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent if jumps > 0 => {
+                1 + flying_jump_southwest(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Opponent => 1,
         },
         _ => 0,
@@ -682,33 +752,48 @@ fn flying_jump_northwest(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64
     match try_add(x, -1, y, -1) {
         Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
             Square::Empty => 1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps),
-            Square::Friendly if jumps > 0 => 1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Friendly if jumps > 0 => {
+                1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Friendly => 0,
-            Square::Opponent if jumps > 0 => 1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps - 1),
+            Square::Opponent if jumps > 0 => {
+                1 + flying_jump_northwest(grid, xp, yp, n - 1, jumps - 1)
+            }
             Square::Opponent => 1,
         },
         _ => 0,
     }
 }
 
+fn flying_capture_orthogonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    flying_capture_north(grid, x, y)
+        + flying_capture_east(grid, x, y)
+        + flying_capture_south(grid, x, y)
+        + flying_capture_west(grid, x, y)
+}
+
+fn flying_capture_diagonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    flying_capture_northeast(grid, x, y)
+        + flying_capture_southeast(grid, x, y)
+        + flying_capture_southwest(grid, x, y)
+        + flying_capture_northwest(grid, x, y)
+}
+
 fn flying_capture_north(grid: &Grid, x: i64, y: i64) -> i64 {
     match try_add(x, 0, y, -1) {
         Some((xp, yp)) => match grid.get(xp, yp) {
             Square::Empty => 1 + flying_capture_north(grid, xp, yp),
-            Square::Friendly => 1 + count_pieces_north(grid, xp, yp),
-            Square::Opponent => 1 + count_pieces_north(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_north(grid, xp, yp),
         },
         _ => 0,
     }
-
 }
 
 fn count_pieces_north(grid: &Grid, x: i64, y: i64) -> i64 {
     match try_add(x, 0, y, -1) {
         Some((xp, yp)) => match grid.get(xp, yp) {
             Square::Empty => 0 + count_pieces_north(grid, xp, yp),
-            Square::Friendly => 1 + count_pieces_north(grid, xp, yp),
-            Square::Opponent => 1 + count_pieces_north(grid, xp, yp),
+            Square::Friendly | Square::Opponent => 1 + count_pieces_north(grid, xp, yp),
         },
         _ => 0,
     }
