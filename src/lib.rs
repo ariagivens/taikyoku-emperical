@@ -482,6 +482,35 @@ fn jump_n_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
     }
 }
 
+fn jump_knight_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, 1, y, -2) {
+        match grid.get(xp, yp) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+fn jump_knight_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    if let Some((xp, yp)) = try_add(x, -1, y, -2) {
+        match grid.get(xp, yp) {
+            Square::Empty => 1,
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        }
+    } else {
+        0
+    }
+}
+
+
+
+
+
+
 fn dove_moves(grid: &Grid, x: i64, y: i64) -> i64 {
     dove_northeast(grid, x, y)
         + dove_southeast(grid, x, y)
@@ -529,4 +558,55 @@ fn range_diagonal(grid: &Grid, x: i64, y: i64) -> i64 {
         + range_southeast(grid, x, y)
         + range_southwest(grid, x, y)
         + range_northwest(grid, x, y)
+}
+
+fn range_north(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_north(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_northeast(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_east(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_east(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_southeast(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_southeast(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_south(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_south(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_southwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_southwest(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_west(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_west(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn range_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
+    step_n_northwest(grid, x, y, BOARD_HEIGHT as i64)
+}
+
+fn flying_jump_north(grid: &Grid, x: i64, y: i64, n: i64, jumps: i64) -> i64 {
+    match try_add(x, 0, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + flying_jump_north(grid, xp, yp, n - 1, jumps),
+            Square::Friendly => if(jumps > 0) {
+                1 + flying_jump_north(grid, xp, yp, n - 1, jumps-1)
+            } else {
+                0
+            }
+            Square::Opponent =>if(jumps > 0) {
+                1 + flying_jump_north(grid, xp, yp, n - 1, jumps-1)
+            } else {
+                1
+            }
+        },
+        _ => 0,
+    }
 }
