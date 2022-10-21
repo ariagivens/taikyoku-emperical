@@ -986,3 +986,189 @@ fn count_pieces_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
         _ => 0,
     }
 }
+
+fn full_lion(grid: &Grid, x: i64, y: i64) -> i64 {
+    let mut total = 0;
+    for j in -2..=2 {
+        for i in -2..=2 {
+            if i == 0 && j == 0 {
+                continue;
+            }
+            match try_add(x, j, y, i) {
+                Some((xp, yp)) if total > 0 => match grid.get(xp, yp) {
+                    Square::Empty | Square::Opponent => total += 1,
+                    Square::Friendly => {},
+                },
+                _ => {},
+            } 
+        }
+    }
+    if total > 0 {
+        total += 1;
+    }
+    return total;
+}
+
+fn limited_lion(grid: &Grid, x: i64, y: i64) -> i64 {
+    let mut total: i64 = 0;
+    for n in 1..=3 {
+        total += jump_n_orthogonal(grid, x, y, n);
+        total += jump_n_diagonal(grid, x, y, n);
+    }
+    if total > 0 {
+        total += 1;
+    }
+    return total;
+}
+
+fn hook_north(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 0, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_north(grid, xp, yp, n-1) + step_n_east(grid, xp, yp, 36) + step_n_west(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_northeast(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, -1) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_northeast(grid, xp, yp, n-1) + step_n_northwest(grid, xp, yp, 36) + step_n_southeast(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_east(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_east(grid, xp, yp, n-1) + step_n_north(grid, xp, yp, 36) + step_n_south(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_southeast(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_southeast(grid, xp, yp, n-1) + step_n_northeast(grid, xp, yp, 36) + step_n_southwest(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_south(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_south(grid, xp, yp, n-1) + step_n_east(grid, xp, yp, 36) + step_n_west(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_southwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_southwest(grid, xp, yp, n-1) + step_n_southeast(grid, xp, yp, 36) + step_n_northwest(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_west(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_west(grid, xp, yp, n-1) + step_n_south(grid, xp, yp, 36) + step_n_north(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn hook_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
+    match try_add(x, 1, y, 0) {
+        Some((xp, yp)) if n > 0 => match grid.get(xp, yp) {
+            Square::Empty => 1 + hook_northwest(grid, xp, yp, n-1) + step_n_southwest(grid, xp, yp, 36) + step_n_northeast(grid, xp, yp, 36),
+            Square::Friendly => 0,
+            Square::Opponent => 1,
+        },
+        _ => 0,
+    }
+}
+
+fn jump_then_range_north(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_north(grid, x, y, 36);
+    total += step_n_north(grid, x, y-1, 36);
+    
+    return total;
+}
+
+fn jump_then_range_northeast(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_northeast(grid, x, y, 36);
+    total += step_n_northeast(grid, x+1, y-1, 36);
+    
+    return total;
+}
+
+fn jump_then_range_east(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_east(grid, x, y, 36);
+    total += step_n_east(grid, x+1, y, 36);
+    
+    return total;
+}
+
+fn jump_then_range_southeast(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_east(grid, x, y, 36);
+    total += step_n_east(grid, x+1, y+1, 36);
+    
+    return total;
+}
+
+fn jump_then_range_south(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_south(grid, x, y, 36);
+    total += step_n_south(grid, x, y+1, 36);
+    
+    return total;
+}
+
+fn jump_then_range_southwest(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_southwest(grid, x, y, 36);
+    total += step_n_southwest(grid, x-1, y+1, 36);
+    
+    return total;
+}
+
+fn jump_then_range_west(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_west(grid, x, y, 36);
+    total += step_n_west(grid, x-1, y, 36);
+    
+    return total;
+}
+
+fn jump_then_range_northwest(grid: &Grid, x: i64, y: i64,) -> i64 {
+    let mut total = 0;
+    total += step_n_west(grid, x, y, 36);
+    total += step_n_west(grid, x-1, y-1, 36);
+    
+    return total;
+}
