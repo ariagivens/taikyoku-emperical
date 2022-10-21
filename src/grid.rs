@@ -1,5 +1,5 @@
-use std::fmt::{Debug, Display};
 use rand::Rng;
+use std::fmt::{Debug, Display};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Square {

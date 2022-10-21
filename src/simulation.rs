@@ -1,5 +1,5 @@
-use std::ops::{Add, AddAssign, Div};
 use std::fmt::Display;
+use std::ops::{Add, AddAssign, Div};
 
 #[derive(Debug, Clone)]
 pub struct Simulation {
@@ -142,12 +142,32 @@ impl Display for Simulation {
             writeln!(f, "\t\t{n}: {}", self.diagonal_jumps[n])?;
         }
         writeln!(f, "\tKnight-Style Jump: {}", self.knight_jump)?;
-        writeln!(f, "\tOrthogonal Jump then Range: {}", self.orthogonal_jump_then_range)?;
-        writeln!(f, "\tDiagonal Jump then Range: {}", self.diagonal_jump_then_range)?;
-        writeln!(f, "\tOrthogonal Flying Jump: {}", self.orthogonal_flying_jump)?;
+        writeln!(
+            f,
+            "\tOrthogonal Jump then Range: {}",
+            self.orthogonal_jump_then_range
+        )?;
+        writeln!(
+            f,
+            "\tDiagonal Jump then Range: {}",
+            self.diagonal_jump_then_range
+        )?;
+        writeln!(
+            f,
+            "\tOrthogonal Flying Jump: {}",
+            self.orthogonal_flying_jump
+        )?;
         writeln!(f, "\tDiagonal Flying Jump: {}", self.diagonal_flying_jump)?;
-        writeln!(f, "\tOrthogonal Flying Capture: {}", self.orthogonal_flying_capture)?;
-        writeln!(f, "\tDiagonal Flying Capture: {}", self.diagonal_flying_capture)?;
+        writeln!(
+            f,
+            "\tOrthogonal Flying Capture: {}",
+            self.orthogonal_flying_capture
+        )?;
+        writeln!(
+            f,
+            "\tDiagonal Flying Capture: {}",
+            self.diagonal_flying_capture
+        )?;
         writeln!(f, "\tOrthogonal Hook Moves: {}", self.orthogonal_hook)?;
         writeln!(f, "\tDiagonal Hook Moves: {}", self.diagonal_hook)?;
         writeln!(f, "\tDove Moves: {}", self.dove)?;
