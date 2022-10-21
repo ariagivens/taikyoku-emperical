@@ -317,6 +317,12 @@ pub fn simulate() -> Simulation {
             diagonal_flying_jump += flying_jump_diagonal(&grid, x, y) as f64 / 4.0;
             orthogonal_flying_capture += flying_capture_orthogonal(&grid, x, y) as f64 / 4.0;
             diagonal_flying_capture += flying_capture_diagonal(&grid, x, y) as f64 / 4.0;
+            orthogonal_jump_then_range += jump_then_range_orthogonal(&grid, x, y) as f64 / 4.0;
+            diagonal_jump_then_range += jump_then_range_diagonal(&grid, x, y) as f64 / 4.0;
+            orthogonal_hook += hook_orthogonal(&grid, x, y) as f64 / 4.0;
+            diagonal_hook += hook_diagonal(&grid, x, y) as f64 / 4.0;
+            full_lion += calc_full_lion(&grid, x, y) as f64;
+            limited_lion += calc_limited_lion(&grid, x, y) as f64;
         }
     }
 
@@ -987,7 +993,7 @@ fn count_pieces_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
     }
 }
 
-fn full_lion(grid: &Grid, x: i64, y: i64) -> i64 {
+fn calc_full_lion(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     for j in -2..=2 {
         for i in -2..=2 {
@@ -995,7 +1001,7 @@ fn full_lion(grid: &Grid, x: i64, y: i64) -> i64 {
                 continue;
             }
             match try_add(x, j, y, i) {
-                Some((xp, yp)) if total > 0 => match grid.get(xp, yp) {
+                Some((xp, yp)) => match grid.get(xp, yp) {
                     Square::Empty | Square::Opponent => total += 1,
                     Square::Friendly => {},
                 },
@@ -1006,10 +1012,10 @@ fn full_lion(grid: &Grid, x: i64, y: i64) -> i64 {
     if total > 0 {
         total += 1;
     }
-    return total;
+    total
 }
 
-fn limited_lion(grid: &Grid, x: i64, y: i64) -> i64 {
+fn calc_limited_lion(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total: i64 = 0;
     for n in 1..=3 {
         total += jump_n_orthogonal(grid, x, y, n);
@@ -1019,6 +1025,20 @@ fn limited_lion(grid: &Grid, x: i64, y: i64) -> i64 {
         total += 1;
     }
     return total;
+}
+
+fn hook_orthogonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    hook_north(grid, x, y, 36)
+        + hook_east(grid, x, y, 36)
+        + hook_south(grid, x, y, 36)
+        + hook_west(grid, x, y, 36)
+}
+
+fn hook_diagonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    hook_northeast(grid, x, y, 36)
+        + hook_southeast(grid, x, y, 36)
+        + hook_southwest(grid, x, y, 36)
+        + hook_northwest(grid, x, y, 36)
 }
 
 fn hook_north(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
@@ -1109,7 +1129,21 @@ fn hook_northwest(grid: &Grid, x: i64, y: i64, n: i64) -> i64 {
     }
 }
 
-fn jump_then_range_north(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_orthogonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    jump_then_range_north(grid, x, y)
+        + jump_then_range_east(grid, x, y)
+        + jump_then_range_south(grid, x, y)
+        + jump_then_range_west(grid, x, y)
+}
+
+fn jump_then_range_diagonal(grid: &Grid, x: i64, y: i64) -> i64 {
+    jump_then_range_northeast(grid, x, y)
+        + jump_then_range_southeast(grid, x, y)
+        + jump_then_range_southwest(grid, x, y)
+        + jump_then_range_northwest(grid, x, y)
+}
+
+fn jump_then_range_north(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_north(grid, x, y, 36);
     total += step_n_north(grid, x, y-1, 36);
@@ -1117,7 +1151,7 @@ fn jump_then_range_north(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_northeast(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_northeast(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_northeast(grid, x, y, 36);
     total += step_n_northeast(grid, x+1, y-1, 36);
@@ -1125,7 +1159,7 @@ fn jump_then_range_northeast(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_east(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_east(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_east(grid, x, y, 36);
     total += step_n_east(grid, x+1, y, 36);
@@ -1133,7 +1167,7 @@ fn jump_then_range_east(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_southeast(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_southeast(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_east(grid, x, y, 36);
     total += step_n_east(grid, x+1, y+1, 36);
@@ -1141,7 +1175,7 @@ fn jump_then_range_southeast(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_south(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_south(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_south(grid, x, y, 36);
     total += step_n_south(grid, x, y+1, 36);
@@ -1149,7 +1183,7 @@ fn jump_then_range_south(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_southwest(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_southwest(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_southwest(grid, x, y, 36);
     total += step_n_southwest(grid, x-1, y+1, 36);
@@ -1157,7 +1191,7 @@ fn jump_then_range_southwest(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_west(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_west(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_west(grid, x, y, 36);
     total += step_n_west(grid, x-1, y, 36);
@@ -1165,7 +1199,7 @@ fn jump_then_range_west(grid: &Grid, x: i64, y: i64,) -> i64 {
     return total;
 }
 
-fn jump_then_range_northwest(grid: &Grid, x: i64, y: i64,) -> i64 {
+fn jump_then_range_northwest(grid: &Grid, x: i64, y: i64) -> i64 {
     let mut total = 0;
     total += step_n_west(grid, x, y, 36);
     total += step_n_west(grid, x-1, y-1, 36);
