@@ -20,6 +20,12 @@ pub struct Simulation {
     diagonal_flying_jump: f64,
     orthogonal_flying_capture: f64,
     diagonal_flying_capture: f64,
+    orthogonal_jump_then_range: f64,
+    diagonal_jump_then_range: f64,
+    orthogonal_hook: f64,
+    diagonal_hook: f64,
+    full_lion: f64,
+    limited_lion: f64,
 }
 
 impl Simulation {
@@ -37,7 +43,17 @@ impl Simulation {
             diagonal_flying_jump: 0.0,
             orthogonal_flying_capture: 0.0,
             diagonal_flying_capture: 0.0,
+            orthogonal_jump_then_range: 0.0,
+            diagonal_jump_then_range: 0.0,
+            orthogonal_hook: 0.0,
+            diagonal_hook: 0.0,
+            full_lion: 0.0,
+            limited_lion: 0.0,
         }
+    }
+
+    pub fn pawn(&self) -> f64 {
+        self.orthogonal_steps[1]
     }
 }
 
@@ -61,6 +77,12 @@ impl Add for Simulation {
         self.diagonal_flying_jump += rhs.diagonal_flying_jump;
         self.orthogonal_flying_capture += rhs.orthogonal_flying_capture;
         self.diagonal_flying_capture += rhs.diagonal_flying_capture;
+        self.orthogonal_jump_then_range += rhs.orthogonal_jump_then_range;
+        self.diagonal_jump_then_range += rhs.diagonal_jump_then_range;
+        self.orthogonal_hook += rhs.orthogonal_hook;
+        self.diagonal_hook += rhs.diagonal_hook;
+        self.full_lion += rhs.full_lion;
+        self.limited_lion += rhs.limited_lion;
 
         self
     }
@@ -92,6 +114,12 @@ impl Div<f64> for Simulation {
         self.diagonal_flying_jump /= divisor;
         self.orthogonal_flying_capture /= divisor;
         self.diagonal_flying_capture /= divisor;
+        self.orthogonal_jump_then_range /= divisor;
+        self.diagonal_jump_then_range /= divisor;
+        self.orthogonal_hook /= divisor;
+        self.diagonal_hook /= divisor;
+        self.full_lion /= divisor;
+        self.limited_lion /= divisor;
 
         self
     }
@@ -119,11 +147,18 @@ impl Display for Simulation {
             writeln!(f, "\t\t{n}: {}", self.diagonal_jumps[n])?;
         }
         writeln!(f, "\tKnight-Style Jump: {}", self.knight_jump)?;
-        writeln!(f, "\tDove Moves: {}", self.dove)?;
+        writeln!(f, "\tOrthogonal Jump then Range: {}", self.orthogonal_jump_then_range)?;
+        writeln!(f, "\tDiagonal Jump then Range: {}", self.diagonal_jump_then_range)?;
         writeln!(f, "\tOrthogonal Flying Jump: {}", self.orthogonal_flying_jump)?;
         writeln!(f, "\tDiagonal Flying Jump: {}", self.diagonal_flying_jump)?;
         writeln!(f, "\tOrthogonal Flying Capture: {}", self.orthogonal_flying_capture)?;
         writeln!(f, "\tDiagonal Flying Capture: {}", self.diagonal_flying_capture)?;
+        writeln!(f, "\tOrthogonal Hook Moves: {}", self.orthogonal_hook)?;
+        writeln!(f, "\tDiagonal Hook Moves: {}", self.diagonal_hook)?;
+        writeln!(f, "\tDove Moves: {}", self.dove)?;
+        writeln!(f, "\tFull lion: {}", self.full_lion)?;
+        writeln!(f, "\tLimited lion: {}", self.limited_lion)?;
+
         Ok(())
     }
 }
@@ -254,6 +289,13 @@ pub fn simulate() -> Simulation {
     let mut diagonal_flying_jump = 0.0;
     let mut orthogonal_flying_capture = 0.0;
     let mut diagonal_flying_capture = 0.0;
+    let mut orthogonal_jump_then_range = 0.0;
+    let mut diagonal_jump_then_range = 0.0;
+    let mut orthogonal_hook = 0.0;
+    let mut diagonal_hook = 0.0;
+    let mut full_lion = 0.0;
+    let mut limited_lion = 0.0;
+    
 
     for x in 0..BOARD_WIDTH {
         for y in 0..BOARD_HEIGHT {
@@ -291,6 +333,12 @@ pub fn simulate() -> Simulation {
         diagonal_flying_jump,
         orthogonal_flying_capture,
         diagonal_flying_capture,
+        orthogonal_jump_then_range,
+        diagonal_jump_then_range,
+        orthogonal_hook,
+        diagonal_hook,
+        full_lion,
+        limited_lion,
     }
 }
 

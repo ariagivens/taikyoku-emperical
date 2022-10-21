@@ -3,9 +3,11 @@ use shogi_piece_values::simulate_n_par;
 use std::time::Instant;
 
 fn main() {
-    let n = 1_000_000;
+    let n = 100_000_000;
     let timer = Instant::now();
     let simulation = simulate_n_par(n);
+    let pawn = simulation.pawn();
+    let simulation = simulation / pawn;
     println!(
         "Finished {} simulations in ~{} seconds.",
         n.to_formatted_string(&Locale::en),
