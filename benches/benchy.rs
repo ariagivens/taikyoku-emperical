@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use shogi_piece_values::{simulate_n, simulate_n_par};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
